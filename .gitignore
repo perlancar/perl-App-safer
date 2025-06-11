@@ -1,0 +1,5 @@
+App-safer-*
+.build
+*~
+nytprof*
+.DS_Store
