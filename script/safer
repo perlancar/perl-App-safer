@@ -35,6 +35,7 @@ USAGE
 }
 
 sub run {
+    require Text::Safer;
     while (defined(my $line = <>)) {
         chomp $line;
         say Text::Safer::encode_safer($line, $Opts{encoding});
