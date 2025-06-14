@@ -11,6 +11,35 @@ use warnings;
 
 our %SPEC;
 
+sub _list_encodings {
+    require Module::List::Tiny;
+
+    my %args = @_;
+    my $detail = $args{detail};
+
+    my $modules = Module::List::Tiny::list_modules("Text::Safer::", {list_modules => 1, recurse=>1});
+    my @res;
+    my $resmeta = $detail ? {"table.fields" => [qw/encoding summary args/]} : {};
+    for my $e (sort keys %$modules) {
+        $e =~ s/^Text::Safer:://;
+        if ($detail) {
+            my $mod = "Text::Safer::$e";
+            (my $mod_pm = "$mod.pm") =~ s!::!/!g;
+            require $mod_pm;
+            no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
+            my $meta = \%{"$mod\::META"};
+            push @res, {
+                encoding => $e,
+                summary => $meta->{summary},
+                args => join(", ", sort keys %{ $meta->{args} // {} }),
+            };
+        } else {
+            push @res, $e;
+        }
+    }
+    return [200, "OK", \@res, $resmeta];
+}
+
 my $num_l_specified = 0;
 
 $SPEC{app} = {
@@ -43,9 +72,16 @@ $SPEC{app} = {
             default => 'alphanum_kebab_nodashend_lc',
             cmdline_aliases => {e=>{}},
             completion => sub {
-                require Complete::Module;
+                require Complete::Util;
+
                 my %args = @_;
-                Complete::Module::complete_module(word => $args{word}, ns_prefix=>"Text::Safer");
+
+                my $encres = _list_encodings(detail => 1);
+                Complete::Util::complete_array_elem(
+                    array     => [map { $_->{encoding} } @{ $encres->[2] }],
+                    summaries => [map { $_->{summary}  } @{ $encres->[2] }],
+                    word      => $args{word},
+                );
             },
         },
         # TODO: encoding_args
@@ -64,32 +100,11 @@ sub app {
     my $detail = $args{detail};
 
     if ($action eq 'list-encodings') {
-        require Module::List::Tiny;
-
-        my $modules = Module::List::Tiny::list_modules("Text::Safer::", {list_modules => 1, recurse=>1});
-        my @res;
-        my $resmeta = $detail ? {"table.fields" => [qw/encoding summary args/]} : {};
-        for my $e (sort keys %$modules) {
-            $e =~ s/^Text::Safer:://;
-            if ($detail) {
-                my $mod = "Text::Safer::$e";
-                (my $mod_pm = "$mod.pm") =~ s!::!/!g;
-                require $mod_pm;
-                no strict 'refs'; ## no critic: TestingAndDebugging::ProhibitNoStrict
-                my $meta = \%{"$mod\::META"};
-                push @res, {
-                    encoding => $e,
-                    summary => $meta->{summary},
-                    args => join(", ", sort keys %{ $meta->{args} // {} }),
-                };
-            } else {
-                push @res, $e;
-            }
-        }
-        return [200, "OK", \@res, $resmeta];
+        return _list_encodings(detail => $detail);
     }
 
     $text = do { local $?; scalar <> } unless defined $text;
+    $text //= "";
     require Text::Safer;
     [200, "OK", Text::Safer::encode_safer($text, $encoding)];
 }
