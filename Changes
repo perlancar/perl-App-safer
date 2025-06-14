@@ -1,4 +1,11 @@
-0.002   2025-06-14  Released-By: PERLANCAR; Urgency: medium
+0.003   2025-06-15  Released-By: PERLANCAR; Urgency: medium
+
+        - [bugfix] Fix getting text from stdin.
+
+        - [ux] Add examples.
+
+
+0.002   2025-06-14  Released-By: PERLANCAR; Urgency: medium; Backward-Incompatible: yes
 
         [INCOMPATIBLE CHANGES]
 
