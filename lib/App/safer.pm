@@ -89,9 +89,33 @@ $SPEC{app} = {
             schema => 'str*',
             pos => 0,
         },
-    },
+    }, # args
+    examples => [
+        {
+            summary => 'List available encodings',
+            argv => ["-l"],
+        },
+        {
+            summary => 'List available encodings (verbose mode)',
+            argv => ["-ll"],
+        },
+        {
+            summary => 'Convert a single text',
+            src => "echo 'Foo Bar, Co., Ltd.' | [[prog]]",
+            src_plang => "bash",
+        },
+        {
+            summary => 'Convert each line then show result and add to clipboard (required clipadd from App::ClipboardUtils)',
+            src => "clipadd -c [[prog]] --tee",
+            src_plang => "bash",
+            test => 0,
+            'x.doc.show_result' => 0,
+        },
+    ],
 };
 sub app {
+    $num_l_specified = 0;
+
     my %args = @_;
 
     my $action = $args{action} // 'encode';
