@@ -103,7 +103,7 @@ sub app {
         return _list_encodings(detail => $detail);
     }
 
-    $text = do { local $?; scalar <> } unless defined $text;
+    $text = do { local $/; scalar <> } unless defined $text;
     $text //= "";
     require Text::Safer;
     [200, "OK", Text::Safer::encode_safer($text, $encoding)];
